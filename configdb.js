@@ -1,26 +1,31 @@
+// configdb.js
+require('dotenv').config();
 const sql = require('mssql');
-require('dotenv').config();  // Cargar las variables de entorno desde .env
+
+const server = process.env.BDHOST;
+if (!server) {
+  throw new Error('🌱 La variable de entorno BDHOST no está definida. ¿Tu .env está en la raíz?');
+}
 
 const config = {
-    user: process.env.BDUSER,       // Tu usuario de base de datos
-    password: process.env.BDPASS,   // Tu contraseña de base de datos
-    server: process.env.BDHOST,     // Tu host
-    database: process.env.BDNAME,   // Nombre de la base de datos
-    port: parseInt(process.env.BDPORT) || 1433, // Puerto (por defecto 1433 para SQL Server)
-    options: {
-        encrypt: true, // Usar cifrado (requerido para Azure SQL, puede ser false en local)
-        trustServerCertificate: true // Permite certificados autofirmados en entornos locales
-    }
+  user:     process.env.BDUSER,
+  password: process.env.BDPASS,
+  server,                             // ✔️ siempre será string
+  database: process.env.BDNAME,
+  port:     parseInt(process.env.BDPORT) || 1433,
+  options: {
+    encrypt: true,
+    trustServerCertificate: true
+  }
 };
 
-const pool = new sql.ConnectionPool(config);
-const connection = pool.connect()
-    .then(pool => {
-        console.log('Conexión a la base de datos SQL Server exitosa');
-        return pool;
-    })
-    .catch(err => {
-        console.error('Error al conectar a la base de datos:', err);
-    });
-
-module.exports = connection;
+module.exports = sql
+  .connect(config)
+  .then(pool => {
+    console.log('✅ Conexión a SQL Server establecida');
+    return pool;
+  })
+  .catch(err => {
+    console.error('❌ Error al conectar a la DB:', err);
+    throw err;
+  });
